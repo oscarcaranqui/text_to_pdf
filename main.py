@@ -96,6 +96,5 @@ message ='''IP: 10.63.10.245/24
  taura_4     PC1     2
  taura_4     PC1     3'''
 
-
 DOCUMENT().write_pdf(message)
 
