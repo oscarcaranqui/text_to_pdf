@@ -1,7 +1,8 @@
+import time
+
 from v1.layout import DOCUMENT
 
-message ='''
-IP: 10.63.10.245/24
+message ='''IP: 10.63.10.245/24
 
   Sector   Piscina Motor
  taura_4     134     1
@@ -93,8 +94,8 @@ IP: 10.63.10.245/24
  taura_4     133    22
  taura_4     PC1     1
  taura_4     PC1     2
- taura_4     PC1     3
-'''
+ taura_4     PC1     3'''
 
 
 DOCUMENT().write_pdf(message)
+

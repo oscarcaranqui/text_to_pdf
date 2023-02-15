@@ -1,15 +1,19 @@
 from v1.filter import extract_information
 from fpdf import FPDF
 import qrcode
-import time
+import datetime
 import os
 
 user_current_directory = os.getcwd()
 path_qr = os.path.join(user_current_directory, "path_of_qr")
-directory_save_path_logo = os.path.join(user_current_directory, "v1/LOGO_SIEMAV.jpg")
+directory_save_path_logo_siemav = os.path.join(user_current_directory, "v1/LOGO_SIEMAV.jpg")
+directory_save_path_logo_santa_priscila = os.path.join(user_current_directory, "v1/SP.jpg")
 directory_save_path_document = os.path.join(user_current_directory, "path_of_document")
 
+#Este diccionario permite agregar la piscina correspondiente unicamente a una camaronera,
+
 pool_max_motor = {"132": "22", "133": "22", "134": "21", "136": "23", "137": "20"}
+
 
 
 class DOCUMENT:
@@ -39,10 +43,30 @@ class DOCUMENT:
             self.pdf.set_fill_color(255, 160, 122)
             self.pdf.cell(w=8, h=10, txt="M" + str(index), border=1, align='C', fill=True)
 
-    def sector(self, offset_x=0):
+    def sector(self, offset_x=0, name_sector=str()):
         self.pdf.set_font("Arial", style="", size=10)
         self.pdf.set_xy(x=10 + offset_x, y=10)
-        self.pdf.cell(w=20, h=10, txt="TAURA4", align='L')
+        self.pdf.cell(w=20, h=10, txt=name_sector.upper(), align='L')
+
+    def ip(self, offset_x=0, ip=str()):
+        self.pdf.set_font("Arial", style="", size=10)
+        self.pdf.set_xy(x=10 + offset_x, y=20)
+        self.pdf.cell(w=20, h=10, txt=ip, align='L')
+
+    def generate_qr(self, offset_x=0, message="Message"):
+        current_date = datetime.datetime.now()
+        formatted_date = current_date.strftime("%d_%m_%Y__%H_%M_%S")
+        image_qr = qrcode.make(message)
+        save_file_image = os.path.join(path_qr, formatted_date + ".png")
+        image_qr.save(save_file_image)
+        self.pdf.image(save_file_image, x=267.5 + offset_x, y=10.5, w=19, h=19)
+
+    def logos(self, offset_x=0):
+        siemav = directory_save_path_logo_siemav
+        self.pdf.image(siemav, x=250 + offset_x, y=10.5, w=17, h=17)
+        santa_priscila = directory_save_path_logo_santa_priscila
+        self.pdf.image(santa_priscila, x=267.5 - 19 * 2 + offset_x, y=10.5, w=19, h=19)
+
 
     def fill_locker(self, pool_received):
         self.pdf.set_font("Arial", style="", size=8)
@@ -52,7 +76,7 @@ class DOCUMENT:
             current_motor_pool = pool_received[key]
 
             self.pdf.set_xy(x=10, y=40 + index * 10 )
-            self.pdf.set_fill_color( 100, 149, 237)
+            self.pdf.set_fill_color(100, 149, 237)
             self.pdf.cell(w=20, h=10, txt="Piscina " + str(key), border=1, align='C', fill=True)
 
             max_motor = list(range(1, int(pool_max_motor[key]) + 1))
@@ -69,16 +93,27 @@ class DOCUMENT:
                 self.pdf.set_fill_color(240, 230, 140)
                 self.pdf.cell(w=8, h=10, txt="No", border=1, align='C', fill=True)
 
-    def create_document(self, save_name, current_dictionary):
+    def create_document(self, save_name, current_dictionary, name_sector, ip, save_message_received_qr):
         self.pdf = FPDF(orientation="L", format="A4", unit="mm")
         self.new_page_pdf()
         self.border(offset_x=0)
         self.name_motor(offset_x=0)
-        self.sector(offset_x=0)
+        self.sector(offset_x=0, name_sector=name_sector)
+        self.ip(offset_x=0, ip=ip)
         self.fill_locker(pool_received=current_dictionary)
+        self.generate_qr(message=save_message_received_qr)
+        self.logos(offset_x=0)
         self.save_pdf(name_document=save_name)
 
     def write_pdf(self, sentence: str):
         response = extract_information(sentence)
-        print(response)
-        self.create_document(save_name="PRUEBA.pdf", current_dictionary=response)
+        if response[0]:
+            data = response[1]
+            self.create_document(save_name="PRUEBA.pdf",
+                                 current_dictionary=data,
+                                 ip=response[2],
+                                 name_sector=response[3],
+                                 save_message_received_qr=sentence
+                                 )
+        else:
+            print("error")
