@@ -12,7 +12,18 @@ directory_save_path_document = os.path.join(user_current_directory, "path_of_doc
 
 #Este diccionario permite agregar la piscina correspondiente unicamente a una camaronera,
 
-pool_max_motor = {"132": "22", "133": "22", "134": "21", "136": "23", "137": "20"}
+pool_max_motor = {"32": "20",
+                  "33": "17",
+                  "35": "14",
+                  "38": "14",
+                  "40": "26",
+
+                  "132": "22",
+                  "133": "22",
+                  "134": "21",
+                  "135": "23",
+                  "136": "23",
+                  "137": "17"}
 
 
 
@@ -25,15 +36,21 @@ class DOCUMENT:
         name_pdf = os.path.join(directory_save_path_document, name_document)
         self.pdf.output(name=name_pdf)
 
+    def titule(self):
+        self.pdf.set_font("Arial", style="", size=12)
+        self.pdf.set_xy(x=110, y=10)
+        self.pdf.cell(w=40, h=10, txt="REPORTE DE PISCINAS VINCULADAS", border=0, align='C', fill=False)
+
     def border(self, offset_x=0):
         self.pdf.rect(x=10 + offset_x, y=10, w=297-10-10, h=210-10-10)
-        line_horizontal = 17
+
+        line_horizontal = 15
         for i in range(1, line_horizontal + 1):
             self.pdf.line(x1=10 + offset_x, y1=20 + 10*i, x2=297 - 10 + offset_x, y2=20 + 10*i)
 
         line_vertical = 30
         for i in range(1, line_vertical + 2):
-            self.pdf.line(x1=22 + 8*i + offset_x, y1=40, x2=22 + 8*i + offset_x, y2=200)
+            self.pdf.line(x1=22 + 8*i + offset_x, y1=40, x2=22 + 8*i + offset_x, y2=170)
 
     def name_motor(self, offset_x=0):
         self.pdf.set_font("Arial", style="", size=8)
@@ -67,6 +84,18 @@ class DOCUMENT:
         santa_priscila = directory_save_path_logo_santa_priscila
         self.pdf.image(santa_priscila, x=267.5 - 19 * 2 + offset_x, y=10.5, w=19, h=19)
 
+    def info_color(self, offset_x=0):
+        self.pdf.set_xy(x=10 + offset_x, y=180)
+        self.pdf.set_fill_color(240, 230, 140)
+        self.pdf.cell(w=8, h=-10, txt="NO", border=1, align='C', fill=True)
+        self.pdf.set_xy(x=20 + offset_x, y=179)
+        self.pdf.cell(w=20, h=10, txt="Este cuadro significa que se encuentra vinculado", align='L')
+
+        self.pdf.set_xy(x=10 + offset_x, y=180)
+        self.pdf.set_fill_color(60, 179, 113)
+        self.pdf.cell(w=8, h=9, txt="OK", border=1, align='C', fill=True)
+        self.pdf.set_xy(x=20 + offset_x, y=170)
+        self.pdf.cell(w=20, h=10, txt="Este cuadro significa que NO se encuentra vinculado", align='L')
 
     def fill_locker(self, pool_received):
         self.pdf.set_font("Arial", style="", size=8)
@@ -91,11 +120,12 @@ class DOCUMENT:
             for motor_no_add in list_motor_no_add:
                 self.pdf.set_xy(x=22 + 8 * motor_no_add, y=40 + 10 * index)
                 self.pdf.set_fill_color(240, 230, 140)
-                self.pdf.cell(w=8, h=10, txt="No", border=1, align='C', fill=True)
+                self.pdf.cell(w=8, h=10, txt="NO", border=1, align='C', fill=True)
 
     def create_document(self, save_name, current_dictionary, name_sector, ip, save_message_received_qr):
         self.pdf = FPDF(orientation="L", format="A4", unit="mm")
         self.new_page_pdf()
+        self.titule()
         self.border(offset_x=0)
         self.name_motor(offset_x=0)
         self.sector(offset_x=0, name_sector=name_sector)
@@ -103,6 +133,7 @@ class DOCUMENT:
         self.fill_locker(pool_received=current_dictionary)
         self.generate_qr(message=save_message_received_qr)
         self.logos(offset_x=0)
+        self.info_color(offset_x=0)
         self.save_pdf(name_document=save_name)
 
     def write_pdf(self, sentence: str):

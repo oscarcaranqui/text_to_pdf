@@ -5,7 +5,7 @@ def extract_information(message: str) -> list:
     pool_motor, result = [], []
     flag = False
     ip = message.split('\n')[0]
-    sector_pool_motor = message.split('\n')[4:]
+    sector_pool_motor = message.split('\n')[3:]
     sector, ip_gw = str(), str()
 
     for item in sector_pool_motor:
