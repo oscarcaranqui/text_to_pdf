@@ -1,4 +1,5 @@
 from v1.filter import extract_information
+from pdf2image import convert_from_path
 from fpdf import FPDF
 import datetime
 import os
@@ -6,7 +7,8 @@ import os
 user_current_directory = os.getcwd()
 directory_save_path_logo_siemav = os.path.join(user_current_directory, "v1/LOGO_SIEMAV.jpg")
 directory_save_path_logo_santa_priscila = os.path.join(user_current_directory, "v1/SP.jpg")
-directory_save_path_document = os.path.join(user_current_directory, "path_of_document")
+directory_path_document = os.path.join(user_current_directory, "path_of_document")
+directory_path_of_images = os.path.join(user_current_directory, "path_of_images")
 
 #Este diccionario permite agregar la piscina correspondiente unicamente a una camaronera,
 pool_max_motor = {"32": "20",
@@ -27,9 +29,9 @@ class DOCUMENT:
     def new_page_pdf(self):
         self.pdf.add_page()
 
-    def save_pdf(self, name_document):
-        name_pdf = os.path.join(directory_save_path_document, name_document)
-        self.pdf.output(name=name_pdf)
+    def save_pdf(self, name_directory):
+        # name_pdf = os.path.join(directory_save_path_document, name_document)
+        self.pdf.output(name=name_directory)
 
     def titule(self):
         self.pdf.set_font("Arial", style="", size=12)
@@ -109,7 +111,7 @@ class DOCUMENT:
                 self.pdf.set_fill_color(240, 230, 140)
                 self.pdf.cell(w=8, h=10, txt="NO", border=1, align='C', fill=True)
 
-    def create_document(self, save_name, current_dictionary, name_sector, ip):
+    def create_document(self, name_directory, current_dictionary, name_sector, ip):
         self.pdf = FPDF(orientation="L", format="A4", unit="mm")
         self.new_page_pdf()
         self.titule()
@@ -120,18 +122,31 @@ class DOCUMENT:
         self.fill_locker(pool_received=current_dictionary)
         self.logos(offset_x=0)
         self.info_color(offset_x=0)
-        self.save_pdf(name_document=save_name)
+        self.save_pdf(name_directory=name_directory)
 
-    def write_pdf(self, sentence: str):
+    def create_name_directory(self):
         current_date = datetime.datetime.now()
         formatted_date = current_date.strftime("%d_%m_%Y__%H_%M_%S")
+        name_file = formatted_date + ".pdf"
+        directory_save_path_document = os.path.join(directory_path_document, name_file)
+        return [directory_save_path_document, name_file]
+
+    def write_pdf(self, sentence: str):
         response = extract_information(sentence)
         if response[0]:
             data = response[1]
-            self.create_document(save_name=formatted_date + ".pdf",
+            self.create_document(name_directory=self.create_name_directory()[0],
                                  current_dictionary=data,
                                  ip=response[2],
                                  name_sector=response[3]
                                  )
+
+            pages = convert_from_path(self.create_name_directory()[0],
+                                      poppler_path=r'C:\Users\oscarcaranqui\Downloads\poppler-0.68.0_x86\poppler-0.68.0\bin')
+
+            directory_save_image = os.path.join(directory_path_of_images, self.create_name_directory()[1])
+            pages[0].save(directory_save_image + '.jpg', 'JPEG')
+            return directory_save_image
         else:
-            print("Error")
+            return sentence
+
