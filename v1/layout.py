@@ -128,8 +128,9 @@ class DOCUMENT:
         current_date = datetime.datetime.now()
         formatted_date = current_date.strftime("%d_%m_%Y__%H_%M_%S")
         name_file = formatted_date + ".pdf"
-        directory_save_path_document = os.path.join(directory_path_document, name_file)
-        return [directory_save_path_document, name_file]
+        directory_save_path_document_without_ext = formatted_date
+        directory_save_path_document_pdf = os.path.join(directory_path_document, name_file)
+        return [directory_save_path_document_pdf, directory_save_path_document_without_ext]
 
     def write_pdf(self, sentence: str):
         response = extract_information(sentence)
@@ -143,7 +144,6 @@ class DOCUMENT:
 
             pages = convert_from_path(self.create_name_directory()[0],
                                       poppler_path=r'C:\Users\oscarcaranqui\Downloads\poppler-0.68.0_x86\poppler-0.68.0\bin')
-
             directory_save_image = os.path.join(directory_path_of_images, self.create_name_directory()[1])
             pages[0].save(directory_save_image + '.jpg', 'JPEG')
             return directory_save_image
