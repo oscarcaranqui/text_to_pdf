@@ -1,110 +1,66 @@
 from v1.layout import DOCUMENT
+from dataclass_wizard import JSONWizard
+from v1.consumer import consume_queue
+from dataclasses import dataclass
+import multiprocessing
 
 
-# message ='''IP: 10.63.10.245/24
-#
-#   Sector   Piscina Motor
-#  taura_4     134     1
-#  taura_4     134     2
-#  taura_4     134     3
-#  taura_4     134     4
-#  taura_4     134     5
-#  taura_4     134     7
-#  taura_4     134     8
-#  taura_4     134     9
-#  taura_4     134    10
-#  taura_4     134    11
-#  taura_4     134    12
-#  taura_4     134    13
-#  taura_4     134    14
-#  taura_4     134    15
-#  taura_4     134    16
-#  taura_4     134    17
-#  taura_4     134    18
-#  taura_4     134    19
-#  taura_4     134    20
-#  taura_4     134    21
-#  taura_4     136     1
-#  taura_4     136     2
-#  taura_4     136     3
-#  taura_4     136     4
-#  taura_4     136     5
-#  taura_4     136     6
-#  taura_4     136     7
-#  taura_4     136     8
-#  taura_4     136     9
-#  taura_4     136    10
-#  taura_4     136    11
-#  taura_4     136    12
-#  taura_4     136    13
-#  taura_4     136    14
-#  taura_4     136    15
-#  taura_4     136    16
-#  taura_4     136    17
-#  taura_4     136    18
-#  taura_4     136    19
-#  taura_4     136    20
-#  taura_4     136    21
-#  taura_4     136    22
-#  taura_4     136    23
-#  taura_4     132     1
-#  taura_4     132     2
-#  taura_4     132     3
-#  taura_4     132     4
-#  taura_4     132     5
-#  taura_4     132     6
-#  taura_4     132     7
-#  taura_4     132     8
-#  taura_4     132     9
-#  taura_4     132    10
-#  taura_4     132    11
-#  taura_4     132    12
-#  taura_4     132    13
-#  taura_4     132    14
-#  taura_4     132    15
-#  taura_4     132    16
-#  taura_4     132    17
-#  taura_4     132    18
-#  taura_4     132    19
-#  taura_4     132    20
-#  taura_4     132    21
-#  taura_4     132    22
-#  taura_4     133     1
-#  taura_4     133     2
-#  taura_4     133     3
-#  taura_4     133     4
-#  taura_4     133     5
-#  taura_4     133     6
-#  taura_4     133     7
-#  taura_4     133     8
-#  taura_4     133     9
-#  taura_4     133    10
-#  taura_4     133    11
-#  taura_4     133    12
-#  taura_4     133    13
-#  taura_4     133    14
-#  taura_4     133    15
-#  taura_4     133    16
-#  taura_4     133    17
-#  taura_4     133    18
-#  taura_4     133    19
-#  taura_4     133    20
-#  taura_4     133    21
-#  taura_4     133    22
-#  taura_4     PC1     1
-#  taura_4     PC1     2
-#  taura_4     PC1     3'''
-#
-# result = DOCUMENT().write_pdf(message)
-# print(result)
-# time.sleep(5)
+@dataclass
+class Sender(JSONWizard):
+    formattedName: str
 
 
-message ='''IP: 10.63.10.245/24
+@dataclass
+class IncomingMessage(JSONWizard):
+    sender: Sender
+    payload: str
+    number: str
+    chatId: str
 
-  Sector   Piscina Motor
- taura_4     134     1
- taura_4     134     2
- taura_4     134     3'''
-result = DOCUMENT().write_pdf(message)
-print(result)
+    @staticmethod
+    def get_info(body: bytes):
+        result = IncomingMessage.from_json(body.decode())
+        contact_name = result.sender.formattedName
+        payload = result.payload
+        number = result.number
+        chat_id = result.chatId
+        return contact_name, payload, number, chat_id
+
+
+@dataclass
+class OutgoingMessage(JSONWizard):
+    sender: str
+    payload: str
+    number: str
+
+    @staticmethod
+    def set_info(contact_name, response_message, number):
+        message = OutgoingMessage(contact_name, response_message, number).to_json()
+        return message
+
+
+class app:
+    def __init__(self):
+        self.message_handler()
+
+    @staticmethod
+    def send_message(contact_name: str, response_message: str, number: str, channel):
+        data = OutgoingMessage.set_info(contact_name, response_message, number)
+        channel.basic_publish(exchange='', routing_key='responses', body=data)
+        print(f" [x] Sent '{response_message}'")
+
+    @staticmethod
+    def message_handler():
+        def callback(ch, method, properties, body):
+            contact_name, payload, number, chat_id = IncomingMessage.get_info(body)
+            result = DOCUMENT().write_pdf(payload)
+            app.send_message(contact_name, result, number, ch)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        consumer = multiprocessing.Process(target=consume_queue(callback))
+        consumer.start()
+
+
+if __name__ == '__main__':
+    app()
+

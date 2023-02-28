@@ -2,6 +2,7 @@ from v1.filter import extract_information
 from pdf2image import convert_from_path
 from fpdf import FPDF
 import datetime
+import pytz
 import os
 
 user_current_directory = os.getcwd()
@@ -9,6 +10,7 @@ directory_save_path_logo_siemav = os.path.join(user_current_directory, "v1/LOGO_
 directory_save_path_logo_santa_priscila = os.path.join(user_current_directory, "v1/SP.jpg")
 directory_path_document = os.path.join(user_current_directory, "path_of_document")
 directory_path_of_images = os.path.join(user_current_directory, "path_of_images")
+
 
 #Este diccionario permite agregar la piscina correspondiente unicamente a una camaronera,
 pool_max_motor = {"32": "20",
@@ -23,6 +25,7 @@ pool_max_motor = {"32": "20",
                   "135": "23",
                   "136": "23",
                   "137": "17"}
+
 
 class DOCUMENT:
 
@@ -124,9 +127,12 @@ class DOCUMENT:
         self.info_color(offset_x=0)
         self.save_pdf(name_directory=name_directory)
 
+
     def create_name_directory(self):
-        current_date = datetime.datetime.now()
-        formatted_date = current_date.strftime("%d_%m_%Y__%H_%M_%S")
+        current_time = datetime.datetime.now()
+        ecuador_tz = pytz.timezone('Ameria/Guayaquil')
+        ecuador_time = current_time.astimezone(ecuador_tz)
+        formatted_date = ecuador_time.strftime("%d_%m_%Y__%H_%M_%S")
         name_file = formatted_date + ".pdf"
         directory_save_path_document_without_ext = formatted_date
         directory_save_path_document_pdf = os.path.join(directory_path_document, name_file)
@@ -141,12 +147,9 @@ class DOCUMENT:
                                  ip=response[2],
                                  name_sector=response[3]
                                  )
-
-            pages = convert_from_path(self.create_name_directory()[0],
-                                      poppler_path=r'C:\Users\oscarcaranqui\Downloads\poppler-0.68.0_x86\poppler-0.68.0\bin')
-            directory_save_image = os.path.join(directory_path_of_images, self.create_name_directory()[1])
-            pages[0].save(directory_save_image + '.jpg', 'JPEG')
+            pages = convert_from_path(self.create_name_directory()[0])
+            directory_save_image = os.path.join(directory_path_of_images, self.create_name_directory()[1]) + '.png'
+            pages[0].save(directory_save_image, 'png')
             return directory_save_image
         else:
             return sentence
-
