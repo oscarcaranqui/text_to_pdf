@@ -130,7 +130,7 @@ class DOCUMENT:
 
     def create_name_directory(self):
         current_time = datetime.datetime.now()
-        ecuador_tz = pytz.timezone('Ameria/Guayaquil')
+        ecuador_tz = pytz.timezone('America/Guayaquil')
         ecuador_time = current_time.astimezone(ecuador_tz)
         formatted_date = ecuador_time.strftime("%d_%m_%Y__%H_%M_%S")
         name_file = formatted_date + ".pdf"
